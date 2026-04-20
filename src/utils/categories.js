@@ -25,10 +25,8 @@ export const FIXED_EXPENSE_CATEGORIES_ALEX = [
   'Canva',
   'ChatGPT',
   'Claude',
-  'Courses',
   'Faceit Premium',
   'LinkedIn Premium',
-  'Sorties',
   'Wifi',
   'YouTube Premium',
 ];
@@ -36,10 +34,8 @@ export const FIXED_EXPENSE_CATEGORIES_ALEX = [
 export const FIXED_EXPENSE_CATEGORIES_AURELIE = [
   'Autre',
   'Beauté',
-  'Courses',
   'Pilates',
   'Shopping',
-  'Sorties',
 ];
 
 export const ALLOCATION_CATEGORIES = [
@@ -47,6 +43,18 @@ export const ALLOCATION_CATEGORIES = [
   'Autre',
   'Bourse',
   'CELI',
+  'Courses',
+  "Fonds d'urgence",
+  'Livret A',
+  'Sorties',
+  'Una',
+  'Vacances',
+];
+
+export const PROJECT_CATEGORIES = [
+  'Assurance santé privée',
+  'Autre',
+  'Bourse',
   'Épargne immobilier',
   'Épargne voiture',
   "Fonds d'urgence",

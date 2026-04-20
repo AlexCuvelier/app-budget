@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { saveCommun, genId } from '../utils/storage';
 import {
   FIXED_EXPENSE_CATEGORIES_COMMUN,
-  ALLOCATION_CATEGORIES,
+  PROJECT_CATEGORIES,
 } from '../utils/categories';
 import { communSummary, resolveAllocation } from '../utils/calculations';
 
@@ -51,7 +51,7 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
       ...commun,
       projects: [
         ...commun.projects,
-        { id: genId(), category: ALLOCATION_CATEGORIES[0], type: 'fixed', value: '' },
+        { id: genId(), category: PROJECT_CATEGORIES[0], type: 'fixed', value: '' },
       ],
     });
   }
@@ -174,7 +174,7 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
               onChange={(v) => updateProject(p.id, 'category', v.target.value)}
               style={{ ...S.select, flex: 2 }}
             >
-              {ALLOCATION_CATEGORIES.map((cat) => (
+              {PROJECT_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>

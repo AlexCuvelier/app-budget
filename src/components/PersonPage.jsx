@@ -1,67 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { savePerson, genId } from '../utils/storage';
-import { FIXED_EXPENSE_CATEGORIES, ALLOCATION_CATEGORIES } from '../utils/categories';
+import {
+  FIXED_EXPENSE_CATEGORIES_ALEX,
+  FIXED_EXPENSE_CATEGORIES_AURELIE,
+  ALLOCATION_CATEGORIES,
+} from '../utils/categories';
 import { personSummary, resolveAllocation } from '../utils/calculations';
+
+const fmt = (n) =>
+  (parseFloat(n) || 0).toLocaleString('fr-CA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }) + ' $';
 
 export default function PersonPage({ name, data, onChange }) {
   const [person, setPerson] = useState(data);
 
-  useEffect(() => {
-    setPerson(data);
-  }, [data]);
+  useEffect(() => { setPerson(data); }, [data]);
 
-  function update(newPerson) {
-    setPerson(newPerson);
-    savePerson(name, newPerson);
-    onChange(newPerson);
-  }
+  const cats =
+    name === 'alex' ? FIXED_EXPENSE_CATEGORIES_ALEX : FIXED_EXPENSE_CATEGORIES_AURELIE;
+  const title = name === 'alex' ? 'Alex' : 'Aurélie';
 
-  function setSalary(val) {
-    update({ ...person, salary: val });
-  }
-
-  function addRevenue() {
-    update({
-      ...person,
-      otherRevenues: [
-        ...person.otherRevenues,
-        { id: genId(), name: '', amount: '', isRecurring: true },
-      ],
-    });
-  }
-
-  function updateRevenue(id, field, val) {
-    update({
-      ...person,
-      otherRevenues: person.otherRevenues.map((r) =>
-        r.id === id ? { ...r, [field]: val } : r
-      ),
-    });
-  }
-
-  function removeRevenue(id) {
-    update({ ...person, otherRevenues: person.otherRevenues.filter((r) => r.id !== id) });
+  function update(next) {
+    setPerson(next);
+    savePerson(name, next);
+    onChange(next);
   }
 
   function addExpense() {
     update({
       ...person,
-      fixedExpenses: [
-        ...person.fixedExpenses,
-        { id: genId(), category: FIXED_EXPENSE_CATEGORIES[0], amount: '' },
-      ],
+      fixedExpenses: [...person.fixedExpenses, { id: genId(), category: cats[0], amount: '' }],
     });
   }
-
   function updateExpense(id, field, val) {
     update({
       ...person,
-      fixedExpenses: person.fixedExpenses.map((e) =>
-        e.id === id ? { ...e, [field]: val } : e
-      ),
+      fixedExpenses: person.fixedExpenses.map((e) => (e.id === id ? { ...e, [field]: val } : e)),
     });
   }
-
   function removeExpense(id) {
     update({ ...person, fixedExpenses: person.fixedExpenses.filter((e) => e.id !== id) });
   }
@@ -71,107 +49,67 @@ export default function PersonPage({ name, data, onChange }) {
       ...person,
       allocations: [
         ...person.allocations,
-        { id: genId(), category: ALLOCATION_CATEGORIES[0], amount: '', isPercentage: false },
+        { id: genId(), category: ALLOCATION_CATEGORIES[0], type: 'fixed', value: '' },
       ],
     });
   }
-
   function updateAllocation(id, field, val) {
     update({
       ...person,
-      allocations: person.allocations.map((a) =>
-        a.id === id ? { ...a, [field]: val } : a
-      ),
+      allocations: person.allocations.map((a) => (a.id === id ? { ...a, [field]: val } : a)),
     });
   }
-
   function removeAllocation(id) {
     update({ ...person, allocations: person.allocations.filter((a) => a.id !== id) });
   }
 
-  const summary = personSummary(person);
-  const afterCharges = summary.afterCharges;
+  const sum = personSummary(person);
 
   return (
-    <div style={styles.page}>
-      <h1 style={styles.title}>{name}</h1>
+    <div style={S.page}>
+      <h1 style={S.h1}>{title}</h1>
 
-      {/* Summary cards */}
-      <div style={styles.cards}>
-        <SummaryCard label="Revenus" value={summary.revenue} color="#6c63ff" />
-        <SummaryCard label="Charges" value={summary.charges} color="#ef476f" />
-        <SummaryCard label="Épargne / Alloc." value={summary.savings} color="#43d9ad" />
-        <SummaryCard label="Disponible" value={summary.available} color={summary.available >= 0 ? '#06d6a0' : '#ef476f'} />
+      <div style={S.cards}>
+        <Card label="Salaire net" value={sum.revenue} color="#4F46E5" />
+        <Card label="Charges fixes" value={sum.charges} color="#EF4444" />
+        <Card label="Allocations" value={sum.savings} color="#10B981" />
+        <Card
+          label="Disponible"
+          value={sum.available}
+          color={sum.available >= 0 ? '#10B981' : '#EF4444'}
+        />
       </div>
 
-      {/* Salary */}
-      <Section title="Salaire net mensuel">
-        <div style={styles.row}>
+      {/* Salaire */}
+      <div style={S.section}>
+        <h2 style={{ ...S.h2, marginBottom: 16 }}>Salaire net mensuel</h2>
+        <div style={S.inlineRow}>
           <input
             type="number"
             placeholder="0"
             value={person.salary || ''}
-            onChange={(e) => setSalary(e.target.value)}
-            style={styles.inputLarge}
+            onChange={(e) => update({ ...person, salary: e.target.value })}
+            style={S.inputLarge}
           />
-          <span style={styles.currency}>€</span>
+          <span style={S.unit}>$</span>
         </div>
-      </Section>
+      </div>
 
-      {/* Other revenues */}
-      <Section
-        title="Autres revenus"
-        action={<AddButton onClick={addRevenue} />}
-      >
-        {person.otherRevenues.length === 0 && (
-          <p style={styles.empty}>Aucun autre revenu</p>
-        )}
-        {person.otherRevenues.map((r) => (
-          <div key={r.id} style={styles.itemRow}>
-            <input
-              type="text"
-              placeholder="Nom"
-              value={r.name}
-              onChange={(e) => updateRevenue(r.id, 'name', e.target.value)}
-              style={{ ...styles.input, flex: 2 }}
-            />
-            <input
-              type="number"
-              placeholder="0"
-              value={r.amount}
-              onChange={(e) => updateRevenue(r.id, 'amount', e.target.value)}
-              style={{ ...styles.input, flex: 1 }}
-            />
-            <span style={styles.currency}>€</span>
-            <select
-              value={r.isRecurring ? 'recurring' : 'once'}
-              onChange={(e) => updateRevenue(r.id, 'isRecurring', e.target.value === 'recurring')}
-              style={styles.select}
-            >
-              <option value="recurring">Récurrent</option>
-              <option value="once">Unique</option>
-            </select>
-            <RemoveButton onClick={() => removeRevenue(r.id)} />
-          </div>
-        ))}
-      </Section>
-
-      {/* Fixed expenses */}
-      <Section
-        title="Charges fixes"
-        action={<AddButton onClick={addExpense} />}
-      >
-        {person.fixedExpenses.length === 0 && (
-          <p style={styles.empty}>Aucune charge fixe</p>
-        )}
+      {/* Charges fixes */}
+      <div style={S.section}>
+        <div style={S.sectionHead}>
+          <h2 style={S.h2}>Charges fixes</h2>
+          <Btn onClick={addExpense}>+ Ajouter</Btn>
+        </div>
+        {person.fixedExpenses.length === 0 && <p style={S.empty}>Aucune charge</p>}
         {person.fixedExpenses.map((e) => (
-          <div key={e.id} style={styles.itemRow}>
+          <div key={e.id} style={S.row}>
             <select
               value={e.category}
               onChange={(v) => updateExpense(e.id, 'category', v.target.value)}
-              style={{ ...styles.select, flex: 2 }}
+              style={{ ...S.select, flex: 2 }}
             >
-              {FIXED_EXPENSE_CATEGORIES.map((c) => (
+              {cats.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -180,29 +118,30 @@ export default function PersonPage({ name, data, onChange }) {
               placeholder="0"
               value={e.amount}
               onChange={(v) => updateExpense(e.id, 'amount', v.target.value)}
-              style={{ ...styles.input, flex: 1 }}
+              style={{ ...S.input, flex: 1 }}
             />
-            <span style={styles.currency}>€</span>
-            <RemoveButton onClick={() => removeExpense(e.id)} />
+            <span style={S.unit}>$</span>
+            <Del onClick={() => removeExpense(e.id)} />
           </div>
         ))}
-      </Section>
+      </div>
 
       {/* Allocations */}
-      <Section
-        title="Allocations budgétaires"
-        subtitle={`Base de calcul : ${formatEur(afterCharges)} (revenus − charges)`}
-        action={<AddButton onClick={addAllocation} />}
-      >
-        {person.allocations.length === 0 && (
-          <p style={styles.empty}>Aucune allocation</p>
-        )}
+      <div style={S.section}>
+        <div style={S.sectionHead}>
+          <div>
+            <h2 style={S.h2}>Allocations budgétaires</h2>
+            <p style={S.sub}>Base : {fmt(sum.revenue)} (revenu mensuel net)</p>
+          </div>
+          <Btn onClick={addAllocation}>+ Ajouter</Btn>
+        </div>
+        {person.allocations.length === 0 && <p style={S.empty}>Aucune allocation</p>}
         {person.allocations.map((a) => (
-          <div key={a.id} style={styles.itemRow}>
+          <div key={a.id} style={S.row}>
             <select
               value={a.category}
               onChange={(v) => updateAllocation(a.id, 'category', v.target.value)}
-              style={{ ...styles.select, flex: 2 }}
+              style={{ ...S.select, flex: 2 }}
             >
               {ALLOCATION_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -211,211 +150,160 @@ export default function PersonPage({ name, data, onChange }) {
             <input
               type="number"
               placeholder="0"
-              value={a.amount}
-              onChange={(v) => updateAllocation(a.id, 'amount', v.target.value)}
-              style={{ ...styles.input, flex: 1 }}
+              value={a.value}
+              onChange={(v) => updateAllocation(a.id, 'value', v.target.value)}
+              style={{ ...S.input, flex: 1 }}
             />
             <select
-              value={a.isPercentage ? 'pct' : 'fixed'}
-              onChange={(v) => updateAllocation(a.id, 'isPercentage', v.target.value === 'pct')}
-              style={styles.select}
+              value={a.type}
+              onChange={(v) => updateAllocation(a.id, 'type', v.target.value)}
+              style={S.typeSelect}
             >
-              <option value="fixed">€</option>
-              <option value="pct">%</option>
+              <option value="fixed">$</option>
+              <option value="percent">%</option>
             </select>
-            {a.isPercentage && a.amount && (
-              <span style={styles.computed}>
-                = {formatEur(resolveAllocation(a, afterCharges))}
-              </span>
+            {a.type === 'percent' && a.value && (
+              <span style={S.computed}>= {fmt(resolveAllocation(a, sum.revenue))}</span>
             )}
-            <RemoveButton onClick={() => removeAllocation(a.id)} />
+            <Del onClick={() => removeAllocation(a.id)} />
           </div>
         ))}
-      </Section>
-    </div>
-  );
-}
-
-function Section({ title, subtitle, action, children }) {
-  return (
-    <div style={styles.section}>
-      <div style={styles.sectionHeader}>
-        <div>
-          <h2 style={styles.sectionTitle}>{title}</h2>
-          {subtitle && <p style={styles.sectionSubtitle}>{subtitle}</p>}
-        </div>
-        {action}
       </div>
-      {children}
     </div>
   );
 }
 
-function SummaryCard({ label, value, color }) {
+function Card({ label, value, color }) {
   return (
-    <div style={{ ...styles.card, borderTop: `3px solid ${color}` }}>
-      <p style={styles.cardLabel}>{label}</p>
-      <p style={{ ...styles.cardValue, color }}>{formatEur(value)}</p>
+    <div style={{ ...S.card, borderTop: `3px solid ${color}` }}>
+      <p style={S.cardLabel}>{label}</p>
+      <p style={{ ...S.cardValue, color }}>{fmt(value)}</p>
     </div>
   );
 }
 
-function AddButton({ onClick }) {
-  return (
-    <button onClick={onClick} style={styles.addBtn}>
-      + Ajouter
-    </button>
-  );
+function Btn({ onClick, children }) {
+  return <button onClick={onClick} style={S.btn}>{children}</button>;
 }
 
-function RemoveButton({ onClick }) {
-  return (
-    <button onClick={onClick} style={styles.removeBtn}>
-      ×
-    </button>
-  );
+function Del({ onClick }) {
+  return <button onClick={onClick} style={S.del}>×</button>;
 }
 
-function formatEur(val) {
-  const n = parseFloat(val) || 0;
-  return n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-}
-
-const styles = {
-  page: {
-    maxWidth: 800,
-    margin: '0 auto',
-    padding: '32px 24px 64px',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 700,
-    marginBottom: 24,
-    color: '#1a1a2e',
-  },
+const S = {
+  page: { maxWidth: 800, margin: '0 auto', padding: '32px 24px 64px' },
+  h1: { fontSize: 28, fontWeight: 700, marginBottom: 24, color: '#111827' },
+  h2: { fontSize: 16, fontWeight: 600, color: '#111827' },
+  sub: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
   cards: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
     gap: 16,
-    marginBottom: 32,
+    marginBottom: 28,
   },
   card: {
-    backgroundColor: '#fff',
+    background: '#fff',
     borderRadius: 12,
     padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   cardLabel: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#9CA3AF',
     fontWeight: 500,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     marginBottom: 6,
   },
-  cardValue: {
-    fontSize: 22,
-    fontWeight: 700,
-  },
+  cardValue: { fontSize: 20, fontWeight: 700 },
   section: {
-    backgroundColor: '#fff',
+    background: '#fff',
     borderRadius: 12,
-    padding: '24px',
+    padding: 24,
     marginBottom: 20,
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
-  sectionHeader: {
+  sectionHead: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: '#1a1a2e',
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 2,
-  },
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  },
-  itemRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
+  inlineRow: { display: 'flex', alignItems: 'center', gap: 10 },
+  row: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 },
   input: {
-    border: '1px solid #e5e7eb',
+    border: '1px solid #E5E7EB',
     borderRadius: 8,
     padding: '8px 12px',
     fontSize: 14,
     outline: 'none',
     minWidth: 0,
+    fontFamily: 'Poppins, sans-serif',
+    color: '#111827',
   },
   inputLarge: {
-    border: '1px solid #e5e7eb',
+    border: '1px solid #E5E7EB',
     borderRadius: 8,
     padding: '10px 16px',
     fontSize: 20,
     fontWeight: 600,
     width: 200,
     outline: 'none',
+    fontFamily: 'Poppins, sans-serif',
+    color: '#111827',
   },
   select: {
-    border: '1px solid #e5e7eb',
+    border: '1px solid #E5E7EB',
     borderRadius: 8,
     padding: '8px 10px',
     fontSize: 13,
-    backgroundColor: '#fff',
+    background: '#fff',
     outline: 'none',
     minWidth: 0,
+    fontFamily: 'Poppins, sans-serif',
+    color: '#111827',
   },
-  currency: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: 500,
-    flexShrink: 0,
+  typeSelect: {
+    border: '1px solid #E5E7EB',
+    borderRadius: 8,
+    padding: '8px 6px',
+    fontSize: 13,
+    background: '#fff',
+    outline: 'none',
+    fontFamily: 'Poppins, sans-serif',
+    width: 56,
+    color: '#111827',
   },
-  computed: {
-    fontSize: 12,
-    color: '#6c63ff',
-    fontWeight: 600,
-    whiteSpace: 'nowrap',
-  },
-  addBtn: {
-    backgroundColor: '#f0eeff',
-    color: '#6c63ff',
+  unit: { fontSize: 14, color: '#6B7280', fontWeight: 500, flexShrink: 0 },
+  computed: { fontSize: 12, color: '#4F46E5', fontWeight: 600, whiteSpace: 'nowrap' },
+  btn: {
+    background: '#EEF2FF',
+    color: '#4F46E5',
     border: 'none',
     borderRadius: 8,
     padding: '7px 14px',
     fontSize: 13,
     fontWeight: 600,
     flexShrink: 0,
+    fontFamily: 'Poppins, sans-serif',
+    cursor: 'pointer',
   },
-  removeBtn: {
+  del: {
     background: 'none',
-    border: '1px solid #e5e7eb',
+    border: '1px solid #E5E7EB',
     borderRadius: 6,
     width: 28,
     height: 28,
-    fontSize: 16,
-    color: '#9ca3af',
+    fontSize: 18,
+    color: '#9CA3AF',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
     lineHeight: 1,
+    cursor: 'pointer',
+    fontFamily: 'Poppins, sans-serif',
+    padding: 0,
   },
-  empty: {
-    fontSize: 13,
-    color: '#9ca3af',
-    fontStyle: 'italic',
-  },
+  empty: { fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' },
 };

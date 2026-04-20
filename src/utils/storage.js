@@ -1,49 +1,55 @@
 const DEFAULT_PERSON = {
-  salary: 0,
-  otherRevenues: [],
+  salary: '',
   fixedExpenses: [],
   allocations: [],
 };
 
 const DEFAULT_COMMUN = {
-  alexContribution: 0,
-  aurelieContribution: 0,
+  contributions: { alex: '', aurelie: '', soWeLeft: '' },
   fixedExpenses: [],
   projects: [],
 };
 
-export function loadData(key, defaultValue) {
+export function loadPerson(name) {
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return defaultValue;
-    return JSON.parse(raw);
+    const raw = localStorage.getItem(`budget_${name}`);
+    if (!raw) return { ...DEFAULT_PERSON, fixedExpenses: [], allocations: [] };
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_PERSON, ...parsed };
   } catch {
-    return defaultValue;
+    return { ...DEFAULT_PERSON, fixedExpenses: [], allocations: [] };
   }
 }
 
-export function saveData(key, value) {
+export function savePerson(name, data) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(`budget_${name}`, JSON.stringify(data));
   } catch (e) {
     console.error('localStorage save error', e);
   }
 }
 
-export function loadPerson(name) {
-  return loadData(`budget_${name}`, DEFAULT_PERSON);
-}
-
-export function savePerson(name, data) {
-  saveData(`budget_${name}`, data);
-}
-
 export function loadCommun() {
-  return loadData('budget_commun', DEFAULT_COMMUN);
+  try {
+    const raw = localStorage.getItem('budget_commun');
+    if (!raw) return { ...DEFAULT_COMMUN, contributions: { ...DEFAULT_COMMUN.contributions }, fixedExpenses: [], projects: [] };
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_COMMUN,
+      ...parsed,
+      contributions: { ...DEFAULT_COMMUN.contributions, ...(parsed.contributions || {}) },
+    };
+  } catch {
+    return { ...DEFAULT_COMMUN, contributions: { ...DEFAULT_COMMUN.contributions }, fixedExpenses: [], projects: [] };
+  }
 }
 
 export function saveCommun(data) {
-  saveData('budget_commun', data);
+  try {
+    localStorage.setItem('budget_commun', JSON.stringify(data));
+  } catch (e) {
+    console.error('localStorage save error', e);
+  }
 }
 
 export function genId() {

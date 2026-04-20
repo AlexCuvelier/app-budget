@@ -4,65 +4,45 @@ const TABS = ['Dashboard', 'Alex', 'Aurélie', 'Commun'];
 
 export default function Navbar({ active, onNavigate }) {
   return (
-    <nav style={styles.nav}>
-      <div style={styles.brand}>Budget</div>
-      <div style={styles.links}>
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => onNavigate(tab)}
-            style={{
-              ...styles.link,
-              ...(active === tab ? styles.linkActive : {}),
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+    <nav style={S.nav}>
+      {TABS.map((tab) => (
+        <button
+          key={tab}
+          onClick={() => onNavigate(tab)}
+          style={{ ...S.tab, ...(active === tab ? S.tabActive : {}) }}
+        >
+          {tab}
+        </button>
+      ))}
     </nav>
   );
 }
 
-const styles = {
+const S = {
   nav: {
     position: 'sticky',
     top: 0,
     zIndex: 100,
-    backgroundColor: '#fff',
-    borderBottom: '1px solid #e8e8f0',
+    background: '#fff',
+    borderBottom: '1px solid #E5E7EB',
     display: 'flex',
-    alignItems: 'center',
-    padding: '0 32px',
-    height: 60,
-    gap: 32,
-    boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+    justifyContent: 'center',
   },
-  brand: {
-    fontWeight: 700,
-    fontSize: 18,
-    color: '#6c63ff',
-    letterSpacing: '-0.5px',
-    marginRight: 16,
-  },
-  links: {
-    display: 'flex',
-    gap: 4,
-  },
-  link: {
+  tab: {
     background: 'none',
     border: 'none',
-    padding: '6px 16px',
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 500,
-    color: '#6b7280',
-    transition: 'all 0.15s',
+    borderBottom: '2px solid transparent',
+    padding: '18px 32px',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 15,
+    fontWeight: 400,
+    color: '#6B7280',
     cursor: 'pointer',
+    transition: 'color 0.15s, border-color 0.15s',
   },
-  linkActive: {
-    backgroundColor: '#f0eeff',
-    color: '#6c63ff',
+  tabActive: {
+    borderBottom: '2px solid #4F46E5',
+    color: '#4F46E5',
     fontWeight: 600,
   },
 };

@@ -47,9 +47,12 @@ export const ALLOCATION_CATEGORIES = [
   'Autre',
   'Bourse',
   'CELI',
+  'Épargne immobilier',
+  'Épargne voiture',
   "Fonds d'urgence",
   'Livret A',
   'Una',
+  'Vacances',
 ];
 
 export const CHART_COLORS = [

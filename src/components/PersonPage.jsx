@@ -5,7 +5,7 @@ import {
   FIXED_EXPENSE_CATEGORIES_AURELIE,
   ALLOCATION_CATEGORIES,
 } from '../utils/categories';
-import { personSummary, resolveAllocation } from '../utils/calculations';
+import { totalFixedExpenses, totalAllocations, resolveAllocation } from '../utils/calculations';
 
 const fmt = (n) =>
   (parseFloat(n) || 0).toLocaleString('fr-CA', {
@@ -13,7 +13,7 @@ const fmt = (n) =>
     maximumFractionDigits: 2,
   }) + ' $';
 
-export default function PersonPage({ name, data, onChange }) {
+export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
   const [person, setPerson] = useState(data);
 
   useEffect(() => { setPerson(data); }, [data]);
@@ -63,20 +63,26 @@ export default function PersonPage({ name, data, onChange }) {
     update({ ...person, allocations: person.allocations.filter((a) => a.id !== id) });
   }
 
-  const sum = personSummary(person);
+  // Calculs locaux avec apport commun
+  const salary = parseFloat(person.salary) || 0;
+  const baseAfterCommun = salary - apportCommun;
+  const charges = totalFixedExpenses(person.fixedExpenses);
+  const baseForAlloc = baseAfterCommun - charges;
+  const savings = totalAllocations(person.allocations, baseForAlloc);
+  const available = baseForAlloc - savings;
 
   return (
     <div style={S.page}>
       <h1 style={S.h1}>{title}</h1>
 
       <div style={S.cards}>
-        <Card label="Salaire net" value={sum.revenue} color="#4F46E5" />
-        <Card label="Charges fixes" value={sum.charges} color="#EF4444" />
-        <Card label="Allocations" value={sum.savings} color="#10B981" />
+        <Card label="Salaire net" value={salary} color="#4F46E5" />
+        <Card label="Charges fixes" value={charges} color="#EF4444" />
+        <Card label="Allocations" value={savings} color="#10B981" />
         <Card
           label="Disponible"
-          value={sum.available}
-          color={sum.available >= 0 ? '#10B981' : '#EF4444'}
+          value={available}
+          color={available >= 0 ? '#10B981' : '#EF4444'}
         />
       </div>
 
@@ -98,7 +104,10 @@ export default function PersonPage({ name, data, onChange }) {
       {/* Charges fixes */}
       <div style={S.section}>
         <div style={S.sectionHead}>
-          <h2 style={S.h2}>Charges fixes</h2>
+          <div>
+            <h2 style={S.h2}>Charges fixes</h2>
+            <p style={S.sub}>Base : {fmt(baseAfterCommun)} (salaire net − apport commun)</p>
+          </div>
           <Btn onClick={addExpense}>+ Ajouter</Btn>
         </div>
         {person.fixedExpenses.length === 0 && <p style={S.empty}>Aucune charge</p>}
@@ -124,6 +133,12 @@ export default function PersonPage({ name, data, onChange }) {
             <Del onClick={() => removeExpense(e.id)} />
           </div>
         ))}
+        {person.fixedExpenses.length > 0 && (
+          <div style={S.subtotal}>
+            <span>Total charges</span>
+            <strong>{fmt(charges)}</strong>
+          </div>
+        )}
       </div>
 
       {/* Allocations */}
@@ -131,7 +146,9 @@ export default function PersonPage({ name, data, onChange }) {
         <div style={S.sectionHead}>
           <div>
             <h2 style={S.h2}>Allocations budgétaires</h2>
-            <p style={S.sub}>Base : {fmt(sum.revenue)} (revenu mensuel net)</p>
+            <p style={S.sub}>
+              Base : {fmt(baseForAlloc)} (salaire net − apport commun − charges fixes)
+            </p>
           </div>
           <Btn onClick={addAllocation}>+ Ajouter</Btn>
         </div>
@@ -163,7 +180,7 @@ export default function PersonPage({ name, data, onChange }) {
               <option value="percent">%</option>
             </select>
             {a.type === 'percent' && a.value && (
-              <span style={S.computed}>= {fmt(resolveAllocation(a, sum.revenue))}</span>
+              <span style={S.computed}>= {fmt(resolveAllocation(a, baseForAlloc))}</span>
             )}
             <Del onClick={() => removeAllocation(a.id)} />
           </div>
@@ -231,6 +248,15 @@ const S = {
   },
   inlineRow: { display: 'flex', alignItems: 'center', gap: 10 },
   row: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 },
+  subtotal: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    borderTop: '1px solid #F3F4F6',
+    paddingTop: 10,
+    marginTop: 4,
+    fontSize: 14,
+    color: '#6B7280',
+  },
   input: {
     border: '1px solid #E5E7EB',
     borderRadius: 8,

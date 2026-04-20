@@ -19,10 +19,20 @@ export default function App() {
           <Dashboard alex={alex} aurelie={aurelie} commun={commun} />
         )}
         {page === 'Alex' && (
-          <PersonPage name="alex" data={alex} onChange={setAlex} />
+          <PersonPage
+            name="alex"
+            data={alex}
+            onChange={setAlex}
+            apportCommun={parseFloat(commun.contributions?.alex) || 0}
+          />
         )}
         {page === 'Aurélie' && (
-          <PersonPage name="aurelie" data={aurelie} onChange={setAurelie} />
+          <PersonPage
+            name="aurelie"
+            data={aurelie}
+            onChange={setAurelie}
+            apportCommun={parseFloat(commun.contributions?.aurelie) || 0}
+          />
         )}
         {page === 'Commun' && (
           <CommunPage

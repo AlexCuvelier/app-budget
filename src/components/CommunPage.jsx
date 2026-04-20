@@ -157,11 +157,11 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
         )}
       </div>
 
-      {/* Projets et épargne */}
+      {/* Allocations budgétaires */}
       <div style={S.section}>
         <div style={S.sectionHead}>
           <div>
-            <h2 style={S.h2}>Projets et épargne</h2>
+            <h2 style={S.h2}>Allocations budgétaires</h2>
             <p style={S.sub}>Base : {fmt(sum.base)} (apports − charges)</p>
           </div>
           <Btn onClick={addProject}>+ Ajouter</Btn>

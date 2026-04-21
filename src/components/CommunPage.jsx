@@ -3,8 +3,27 @@ import { saveCommun, genId } from '../utils/storage';
 import {
   FIXED_EXPENSE_CATEGORIES_COMMUN,
   PROJECT_CATEGORIES,
+  getCategoryColor,
 } from '../utils/categories';
 import { communSummary, resolveAllocation } from '../utils/calculations';
+
+const P = {
+  bg:      '#FAFAF7',
+  surface: '#FFFFFF',
+  ink:     '#1A1A1A',
+  muted:   '#6B6B6B',
+  faint:   '#A8A8A3',
+  border:  '#E8E8E3',
+  divider: '#F0F0EB',
+  violet:  'oklch(0.58 0.24 295)',
+  red:     'oklch(0.62 0.25 25)',
+};
+
+const CONTRIB_TONES = {
+  alex:     'oklch(0.58 0.24 295)',
+  aurelie:  'oklch(0.60 0.24 340)',
+  soWeLeft: 'oklch(0.82 0.19 85)',
+};
 
 const fmt = (n) =>
   (parseFloat(n) || 0).toLocaleString('fr-CA', {
@@ -68,67 +87,83 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
   const sum = communSummary(commun);
   const c = commun.contributions || {};
 
-  const alexPct =
-    alexSalary > 0
-      ? ((parseFloat(c.alex) || 0) / alexSalary * 100).toFixed(1)
-      : null;
-  const aureliePct =
-    aurelieSalary > 0
-      ? ((parseFloat(c.aurelie) || 0) / aurelieSalary * 100).toFixed(1)
-      : null;
+  const alexAmt    = parseFloat(c.alex)     || 0;
+  const aurelieAmt = parseFloat(c.aurelie)  || 0;
+  const soWeLeftAmt = parseFloat(c.soWeLeft) || 0;
+
+  const alexPct    = alexSalary > 0    ? ((alexAmt / alexSalary) * 100).toFixed(1)    : null;
+  const aureliePct = aurelieSalary > 0 ? ((aurelieAmt / aurelieSalary) * 100).toFixed(1) : null;
 
   return (
     <div style={S.page}>
-      <h1 style={S.h1}>Commun</h1>
+      <div style={S.titleWrap}>
+        <div style={S.eyebrow}>Avril 2026 · Pot commun du couple</div>
+        <h1 style={S.h1}>Commun</h1>
+      </div>
 
-      <div style={S.cards}>
-        <Card label="Total apports" value={sum.totalContributions} color="#4F46E5" />
-        <Card label="Charges fixes" value={sum.charges} color="#EF4444" />
-        <Card label="Projets / Épargne" value={sum.savings} color="#10B981" />
-        <Card
-          label="Disponible"
-          value={sum.available}
-          color={sum.available >= 0 ? '#10B981' : '#EF4444'}
-        />
+      {/* KPI cards */}
+      <div style={S.kpiGrid}>
+        <KpiCard label="Total apports"   value={fmt(sum.totalContributions)} tone={P.ink} />
+        <KpiCard label="Charges communes" value={fmt(sum.charges)}           tone={P.red} />
+        <KpiCard label="Allocations"     value={fmt(sum.savings)}            tone={P.violet} />
+        <KpiCard label="Disponible"      value={fmt(sum.available)} tone={sum.available >= 0 ? P.ink : P.red} />
       </div>
 
       {/* Apports mensuels */}
-      <div style={S.section}>
-        <h2 style={{ ...S.h2, marginBottom: 20 }}>Apports mensuels</h2>
-        <div style={S.contribGrid}>
-          <ContribBox
-            label="Alex"
-            value={c.alex}
-            pct={alexPct}
-            onChange={(v) => setContrib('alex', v)}
-          />
-          <ContribBox
-            label="Aurélie"
-            value={c.aurelie}
-            pct={aureliePct}
-            onChange={(v) => setContrib('aurelie', v)}
-          />
-          <ContribBox
-            label="So We Left"
-            value={c.soWeLeft}
-            onChange={(v) => setContrib('soWeLeft', v)}
-          />
-        </div>
+      <SectionCard title="Apports mensuels">
+        <ContribRow
+          label="Alex"
+          initials="A"
+          tone={CONTRIB_TONES.alex}
+          value={c.alex}
+          pct={alexPct}
+          salary={alexSalary}
+          onChange={(v) => setContrib('alex', v)}
+        />
+        <ContribRow
+          label="Aurélie"
+          initials="Au"
+          tone={CONTRIB_TONES.aurelie}
+          value={c.aurelie}
+          pct={aureliePct}
+          salary={aurelieSalary}
+          onChange={(v) => setContrib('aurelie', v)}
+          isLast
+        />
         <div style={S.totalBar}>
           <span style={S.totalLabel}>Total commun</span>
           <span style={S.totalValue}>{fmt(sum.totalContributions)}</span>
         </div>
-      </div>
+        {/* So We Left */}
+        <div style={{ paddingTop: 12, borderTop: `0.5px solid ${P.divider}`, marginTop: 4 }}>
+          <div style={S.sowLabel}>So We Left</div>
+          <div style={S.contribInputRow}>
+            <div style={{ ...S.avatar, background: CONTRIB_TONES.soWeLeft }}>SWL</div>
+            <input
+              type="number"
+              placeholder="0"
+              value={c.soWeLeft || ''}
+              onChange={(e) => setContrib('soWeLeft', e.target.value)}
+              style={S.contribInput}
+            />
+            <span style={S.unit}>$</span>
+          </div>
+        </div>
+      </SectionCard>
 
       {/* Charges fixes communes */}
-      <div style={S.section}>
-        <div style={S.sectionHead}>
-          <h2 style={S.h2}>Charges fixes communes</h2>
-          <Btn onClick={addExpense}>+ Ajouter</Btn>
-        </div>
+      <SectionCard
+        title="Charges fixes communes"
+        action="Ajouter"
+        onAction={addExpense}
+      >
         {commun.fixedExpenses.length === 0 && <p style={S.empty}>Aucune charge commune</p>}
-        {commun.fixedExpenses.map((e) => (
-          <div key={e.id} style={S.row}>
+        {commun.fixedExpenses.map((e, i) => (
+          <div key={e.id} style={{
+            ...S.row,
+            borderBottom: i < commun.fixedExpenses.length - 1 ? `0.5px solid ${P.divider}` : 'none',
+          }}>
+            <div style={{ ...S.bar, background: getCategoryColor(e.category) }} />
             <select
               value={e.category}
               onChange={(v) => updateExpense(e.id, 'category', v.target.value)}
@@ -155,20 +190,22 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
             <strong>{fmt(sum.charges)}</strong>
           </div>
         )}
-      </div>
+      </SectionCard>
 
       {/* Allocations budgétaires */}
-      <div style={S.section}>
-        <div style={S.sectionHead}>
-          <div>
-            <h2 style={S.h2}>Allocations budgétaires</h2>
-            <p style={S.sub}>Base : {fmt(sum.base)} (apports − charges)</p>
-          </div>
-          <Btn onClick={addProject}>+ Ajouter</Btn>
-        </div>
+      <SectionCard
+        title="Allocations budgétaires"
+        action="Ajouter"
+        onAction={addProject}
+        sub={`Base : ${fmt(sum.base)} (apports − charges)`}
+      >
         {commun.projects.length === 0 && <p style={S.empty}>Aucun projet</p>}
-        {commun.projects.map((p) => (
-          <div key={p.id} style={S.row}>
+        {commun.projects.map((p, i) => (
+          <div key={p.id} style={{
+            ...S.row,
+            borderBottom: i < commun.projects.length - 1 ? `0.5px solid ${P.divider}` : 'none',
+          }}>
+            <div style={{ ...S.bar, background: getCategoryColor(p.category) }} />
             <select
               value={p.category}
               onChange={(v) => updateProject(p.id, 'category', v.target.value)}
@@ -201,16 +238,43 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
             <Del onClick={() => removeProject(p.id)} />
           </div>
         ))}
-      </div>
+      </SectionCard>
     </div>
   );
 }
 
-function ContribBox({ label, value, pct, onChange }) {
+function ContribRow({ label, initials, tone, value, pct, salary, onChange, isLast }) {
+  const amt = parseFloat(value) || 0;
+  const barPct = salary > 0 ? Math.min(100, (amt / salary) * 100) : 0;
   return (
-    <div style={S.contribBox}>
-      <p style={S.contribLabel}>{label}</p>
-      <div style={S.contribRow}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '12px 0',
+      borderBottom: isLast ? 'none' : `0.5px solid ${P.divider}`,
+      marginBottom: isLast ? 0 : 0,
+    }}>
+      <div style={{ ...S.avatar, background: tone }}>{initials}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily: 'Poppins, sans-serif', fontSize: 13,
+          fontWeight: 600, color: P.ink, marginBottom: 4,
+        }}>{label}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 60, height: 4, borderRadius: 2,
+            background: P.divider, overflow: 'hidden',
+          }}>
+            <div style={{ width: `${barPct}%`, height: '100%', background: tone }} />
+          </div>
+          {pct !== null && pct !== undefined && salary > 0 && (
+            <span style={{
+              fontFamily: 'Poppins, sans-serif', fontSize: 10,
+              fontWeight: 500, color: tone,
+            }}>{pct} % du salaire</span>
+          )}
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <input
           type="number"
           placeholder="0"
@@ -220,24 +284,36 @@ function ContribBox({ label, value, pct, onChange }) {
         />
         <span style={S.unit}>$</span>
       </div>
-      {pct !== null && pct !== undefined && (
-        <p style={S.contribPct}>{pct} % du salaire</p>
-      )}
     </div>
   );
 }
 
-function Card({ label, value, color }) {
+function KpiCard({ label, value, tone }) {
   return (
-    <div style={{ ...S.card, borderTop: `3px solid ${color}` }}>
-      <p style={S.cardLabel}>{label}</p>
-      <p style={{ ...S.cardValue, color }}>{fmt(value)}</p>
+    <div style={S.kpiCard}>
+      <div style={S.kpiLabel}>{label}</div>
+      <div style={{ ...S.kpiValue, color: tone }}>{value}</div>
     </div>
   );
 }
 
-function Btn({ onClick, children }) {
-  return <button onClick={onClick} style={S.btn}>{children}</button>;
+function SectionCard({ title, action, onAction, sub, children }) {
+  return (
+    <div style={S.card}>
+      <div style={S.cardHead}>
+        <div>
+          <div style={S.sectionTitle}>{title}</div>
+          {sub && <div style={S.sub}>{sub}</div>}
+        </div>
+        {action && (
+          <button onClick={onAction} style={S.addBtn}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> {action}
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 function Del({ onClick }) {
@@ -245,149 +321,185 @@ function Del({ onClick }) {
 }
 
 const S = {
-  page: { maxWidth: 800, margin: '0 auto', padding: '32px 24px 64px' },
-  h1: { fontSize: 28, fontWeight: 700, marginBottom: 24, color: '#111827' },
-  h2: { fontSize: 16, fontWeight: 600, color: '#111827' },
-  sub: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-  cards: {
+  page: { maxWidth: 720, margin: '0 auto', padding: '0 16px 64px' },
+  titleWrap: { padding: '24px 4px 20px' },
+  eyebrow: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 10, fontWeight: 500,
+    letterSpacing: '0.12em', color: '#A8A8A3',
+    textTransform: 'uppercase', marginBottom: 6,
+  },
+  h1: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 30, fontWeight: 600,
+    letterSpacing: '-0.8px', color: '#1A1A1A',
+    lineHeight: 1, margin: 0,
+  },
+  kpiGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-    gap: 16,
-    marginBottom: 28,
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 8, marginBottom: 14,
+  },
+  kpiCard: {
+    background: '#FFFFFF',
+    borderRadius: 14,
+    border: '0.5px solid #E8E8E3',
+    padding: '12px 10px',
+    minHeight: 78,
+    display: 'flex', flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  kpiLabel: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 9, fontWeight: 500,
+    letterSpacing: '0.06em', color: '#A8A8A3',
+    textTransform: 'uppercase', lineHeight: 1.2,
+  },
+  kpiValue: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 14, fontWeight: 600,
+    letterSpacing: '-0.3px',
+    fontVariantNumeric: 'tabular-nums',
+    lineHeight: 1.1, marginTop: 4,
   },
   card: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '16px 20px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    background: '#FFFFFF',
+    borderRadius: 18,
+    border: '0.5px solid #E8E8E3',
+    padding: '18px 18px 0',
+    marginBottom: 14,
+    overflow: 'hidden',
   },
-  cardLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    marginBottom: 6,
-  },
-  cardValue: { fontSize: 20, fontWeight: 700 },
-  section: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    marginBottom: 20,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-  },
-  sectionHead: {
+  cardHead: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    paddingBottom: 14,
+    borderBottom: '0.5px solid #F0F0EB',
+    marginBottom: 4,
   },
-  contribGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: 16,
-    marginBottom: 16,
-  },
-  contribBox: { background: '#F9FAFB', borderRadius: 10, padding: 16 },
-  contribLabel: { fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 },
-  contribRow: { display: 'flex', alignItems: 'center', gap: 8 },
-  contribInput: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 18,
-    fontWeight: 600,
-    flex: 1,
-    minWidth: 0,
-    outline: 'none',
-    background: '#fff',
+  sectionTitle: {
     fontFamily: 'Poppins, sans-serif',
-    color: '#111827',
+    fontSize: 10, fontWeight: 500,
+    letterSpacing: '0.12em', color: '#A8A8A3',
+    textTransform: 'uppercase',
   },
-  contribPct: { fontSize: 12, color: '#4F46E5', fontWeight: 600, marginTop: 6 },
+  sub: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 11, color: '#A8A8A3', marginTop: 3,
+  },
+  addBtn: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 11, fontWeight: 500,
+    color: 'oklch(0.58 0.24 295)',
+    letterSpacing: '0.03em', padding: 0,
+    display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+  },
+  avatar: {
+    width: 36, height: 36, borderRadius: '50%',
+    flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 600,
+    color: '#fff', letterSpacing: '0.02em',
+  },
+  contribInputRow: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    marginTop: 8, paddingBottom: 14,
+  },
+  contribInput: {
+    border: '1px solid #E8E8E3',
+    borderRadius: 8,
+    padding: '8px 10px',
+    fontSize: 15, fontWeight: 600,
+    width: 120, minWidth: 0,
+    outline: 'none',
+    background: '#FAFAF7',
+    fontFamily: 'Poppins, sans-serif',
+    color: '#1A1A1A',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  sowLabel: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 13, fontWeight: 600, color: '#1A1A1A',
+    marginBottom: 2,
+  },
   totalBar: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: '#EEF2FF',
+    background: 'oklch(0.95 0.05 295)',
     borderRadius: 8,
-    padding: '10px 16px',
+    padding: '9px 14px',
+    marginTop: 12, marginBottom: 14,
   },
-  totalLabel: { fontSize: 14, fontWeight: 600, color: '#4F46E5' },
-  totalValue: { fontSize: 18, fontWeight: 700, color: '#4F46E5' },
-  row: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 },
-  input: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '8px 12px',
-    fontSize: 14,
-    outline: 'none',
-    minWidth: 0,
+  totalLabel: {
     fontFamily: 'Poppins, sans-serif',
-    color: '#111827',
+    fontSize: 13, fontWeight: 600,
+    color: 'oklch(0.58 0.24 295)',
+  },
+  totalValue: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 16, fontWeight: 700,
+    color: 'oklch(0.58 0.24 295)',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  row: {
+    display: 'flex', alignItems: 'center',
+    padding: '10px 0', gap: 10,
+  },
+  bar: {
+    width: 4, height: 32, borderRadius: 4, flexShrink: 0,
+  },
+  input: {
+    border: '1px solid #E8E8E3',
+    borderRadius: 8, padding: '7px 10px',
+    fontSize: 13, outline: 'none',
+    minWidth: 0,
+    fontFamily: 'Poppins, sans-serif', color: '#1A1A1A',
+    background: '#FAFAF7', fontVariantNumeric: 'tabular-nums',
   },
   select: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '8px 10px',
-    fontSize: 13,
-    background: '#fff',
-    outline: 'none',
+    border: '1px solid #E8E8E3',
+    borderRadius: 8, padding: '7px 8px',
+    fontSize: 12, background: '#FAFAF7', outline: 'none',
     minWidth: 0,
-    fontFamily: 'Poppins, sans-serif',
-    color: '#111827',
+    fontFamily: 'Poppins, sans-serif', color: '#1A1A1A',
   },
   typeSelect: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '8px 6px',
-    fontSize: 13,
-    background: '#fff',
-    outline: 'none',
-    fontFamily: 'Poppins, sans-serif',
-    width: 56,
-    color: '#111827',
+    border: '1px solid #E8E8E3',
+    borderRadius: 8, padding: '7px 6px',
+    fontSize: 12, background: '#FAFAF7', outline: 'none',
+    fontFamily: 'Poppins, sans-serif', width: 52, color: '#1A1A1A',
   },
-  unit: { fontSize: 14, color: '#6B7280', fontWeight: 500, flexShrink: 0 },
-  computed: { fontSize: 12, color: '#4F46E5', fontWeight: 600, whiteSpace: 'nowrap' },
+  unit: { fontSize: 13, color: '#6B6B6B', fontWeight: 500, flexShrink: 0 },
+  computed: {
+    fontSize: 11, color: 'oklch(0.58 0.24 295)',
+    fontWeight: 600, whiteSpace: 'nowrap',
+    fontVariantNumeric: 'tabular-nums',
+  },
   subtotal: {
     display: 'flex',
     justifyContent: 'space-between',
-    borderTop: '1px solid #F3F4F6',
-    paddingTop: 10,
-    marginTop: 4,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  btn: {
-    background: '#EEF2FF',
-    color: '#4F46E5',
-    border: 'none',
-    borderRadius: 8,
-    padding: '7px 14px',
-    fontSize: 13,
-    fontWeight: 600,
-    flexShrink: 0,
-    fontFamily: 'Poppins, sans-serif',
-    cursor: 'pointer',
+    borderTop: '0.5px solid #F0F0EB',
+    paddingTop: 10, paddingBottom: 14,
+    marginTop: 4, fontSize: 13, color: '#6B6B6B',
   },
   del: {
     background: 'none',
-    border: '1px solid #E5E7EB',
-    borderRadius: 6,
-    width: 28,
-    height: 28,
-    fontSize: 18,
-    color: '#9CA3AF',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    lineHeight: 1,
-    cursor: 'pointer',
-    fontFamily: 'Poppins, sans-serif',
-    padding: 0,
+    border: '1px solid #E8E8E3',
+    borderRadius: 6, width: 26, height: 26,
+    fontSize: 16, color: '#A8A8A3',
+    display: 'flex', alignItems: 'center',
+    justifyContent: 'center', flexShrink: 0,
+    lineHeight: 1, cursor: 'pointer',
+    fontFamily: 'Poppins, sans-serif', padding: 0,
   },
-  empty: { fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' },
+  empty: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 12, color: '#A8A8A3',
+    fontStyle: 'italic', paddingBottom: 14,
+  },
 };

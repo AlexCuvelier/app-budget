@@ -63,9 +63,63 @@ export const PROJECT_CATEGORIES = [
   'Vacances',
 ];
 
+// Violet dominant, red reserved for risk/alerts
+export const CATEGORY_COLORS = {
+  'Loyer':                    'oklch(0.58 0.24 295)',
+  'Remboursement prêt maison':'oklch(0.58 0.24 295)',
+  'Remboursement prêt voiture':'oklch(0.58 0.24 295)',
+  'Épargne immobilier':        'oklch(0.58 0.24 295)',
+  'Épargne voiture':           'oklch(0.58 0.24 295)',
+  'Bourse':                    'oklch(0.58 0.24 295)',
+  'Assurance logement':        'oklch(0.62 0.25 25)',
+  'Assurance voiture':         'oklch(0.62 0.25 25)',
+  'Assurance santé privée':    'oklch(0.62 0.25 25)',
+  'Électricité':               'oklch(0.84 0.22 125)',
+  'Eau':                       'oklch(0.84 0.22 125)',
+  'Wifi':                      'oklch(0.84 0.22 125)',
+  'Netflix':                   'oklch(0.54 0.24 270)',
+  'Disney+':                   'oklch(0.54 0.24 270)',
+  'Spotify':                   'oklch(0.54 0.24 270)',
+  'Amazon Prime':              'oklch(0.54 0.24 270)',
+  'Telus Streaming (inclut Netflix / Disney+ / Amazon Prime)': 'oklch(0.54 0.24 270)',
+  'Nord VPN':                  'oklch(0.54 0.24 270)',
+  'YouTube Premium':           'oklch(0.54 0.24 270)',
+  'Adobe':                     'oklch(0.54 0.24 270)',
+  'Canva':                     'oklch(0.54 0.24 270)',
+  'ChatGPT':                   'oklch(0.60 0.22 245)',
+  'Claude':                    'oklch(0.60 0.22 245)',
+  'Faceit Premium':            'oklch(0.60 0.24 340)',
+  'LinkedIn Premium':          'oklch(0.60 0.22 245)',
+  'Téléphone(s)':              'oklch(0.60 0.22 245)',
+  'Beauté':                    'oklch(0.60 0.24 340)',
+  'Pilates':                   'oklch(0.60 0.24 340)',
+  'Shopping':                  'oklch(0.60 0.24 340)',
+  'CELI':                      'oklch(0.68 0.21 150)',
+  'Livret A':                  'oklch(0.68 0.21 150)',
+  "Fonds d'urgence":           'oklch(0.68 0.21 150)',
+  'Courses':                   'oklch(0.82 0.19 85)',
+  'Una':                       'oklch(0.82 0.19 85)',
+  'Essence':                   'oklch(0.70 0.17 195)',
+  'Vacances':                  'oklch(0.70 0.17 195)',
+  'Sorties':                   'oklch(0.60 0.24 340)',
+  'Autre':                     'oklch(0.60 0.04 240)',
+};
+
+export function getCategoryColor(cat) {
+  return CATEGORY_COLORS[cat] || 'oklch(0.60 0.04 240)';
+}
+
 export const CHART_COLORS = [
-  '#4F46E5', '#7C3AED', '#EC4899', '#F59E0B', '#10B981',
-  '#3B82F6', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16',
-  '#F97316', '#6366F1', '#14B8A6', '#F43F5E', '#A855F7',
-  '#22C55E', '#EAB308', '#64748B',
+  'oklch(0.58 0.24 295)',
+  'oklch(0.70 0.17 195)',
+  'oklch(0.82 0.19 85)',
+  'oklch(0.60 0.24 340)',
+  'oklch(0.68 0.21 150)',
+  'oklch(0.54 0.24 270)',
+  'oklch(0.84 0.22 125)',
+  'oklch(0.60 0.22 245)',
+  'oklch(0.75 0.18 320)',
+  'oklch(0.78 0.16 160)',
+  'oklch(0.65 0.20 60)',
+  'oklch(0.60 0.04 240)',
 ];

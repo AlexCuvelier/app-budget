@@ -2,18 +2,36 @@ import React from 'react';
 
 const TABS = ['Dashboard', 'Alex', 'Aurélie', 'Commun'];
 
+const P = {
+  bg:     '#FAFAF7',
+  ink:    '#1A1A1A',
+  muted:  '#6B6B6B',
+  border: '#E8E8E3',
+  violet: 'oklch(0.58 0.24 295)',
+};
+
 export default function Navbar({ active, onNavigate }) {
   return (
     <nav style={S.nav}>
-      {TABS.map((tab) => (
-        <button
-          key={tab}
-          onClick={() => onNavigate(tab)}
-          style={{ ...S.tab, ...(active === tab ? S.tabActive : {}) }}
-        >
-          {tab}
-        </button>
-      ))}
+      <div style={S.top}>
+        <span style={S.brand}>Budget</span>
+        <div style={S.avatar}>A&A</div>
+      </div>
+      <div style={S.tabs}>
+        {TABS.map((tab) => {
+          const isActive = active === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => onNavigate(tab)}
+              style={{ ...S.tab, ...(isActive ? S.tabActive : {}) }}
+            >
+              {tab}
+              {isActive && <div style={S.underline} />}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
@@ -23,26 +41,66 @@ const S = {
     position: 'sticky',
     top: 0,
     zIndex: 100,
-    background: '#fff',
-    borderBottom: '1px solid #E5E7EB',
+    background: P.bg,
+    borderBottom: `0.5px solid ${P.border}`,
+  },
+  top: {
     display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '14px 20px 4px',
+  },
+  brand: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 13,
+    fontWeight: 600,
+    letterSpacing: '0.14em',
+    color: P.ink,
+    textTransform: 'uppercase',
+  },
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: '50%',
+    background: 'oklch(0.95 0.05 295)',
+    display: 'flex',
+    alignItems: 'center',
     justifyContent: 'center',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 10,
+    fontWeight: 600,
+    color: P.violet,
+    letterSpacing: '0.02em',
+  },
+  tabs: {
+    display: 'flex',
+    padding: '0 12px',
   },
   tab: {
-    background: 'none',
+    flex: 1,
+    background: 'transparent',
     border: 'none',
-    borderBottom: '2px solid transparent',
-    padding: '18px 32px',
+    padding: '12px 4px 14px',
     fontFamily: 'Poppins, sans-serif',
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: 400,
-    color: '#6B7280',
+    color: P.muted,
     cursor: 'pointer',
-    transition: 'color 0.15s, border-color 0.15s',
+    position: 'relative',
+    textAlign: 'center',
   },
   tabActive: {
-    borderBottom: '2px solid #4F46E5',
-    color: '#4F46E5',
     fontWeight: 600,
+    color: P.ink,
+  },
+  underline: {
+    position: 'absolute',
+    left: '50%',
+    bottom: 0,
+    transform: 'translateX(-50%)',
+    width: 24,
+    height: 2,
+    borderRadius: 2,
+    background: P.ink,
   },
 };

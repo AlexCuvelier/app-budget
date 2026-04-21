@@ -65,24 +65,24 @@ export function healthScore(alexData, aurelieData, communData) {
 
   let label, color, comment;
   if (score >= 80) {
-    label = 'Excellent';
-    color = '#10B981';
+    label = 'Situation saine';
+    color = 'oklch(0.58 0.24 295)';
     comment = `Excellent ! Vous épargnez ${(savingsRate * 100).toFixed(0)} % de vos revenus et vos charges restent bien maîtrisées.`;
   } else if (score >= 60) {
-    label = 'Bon';
-    color = '#34D399';
+    label = 'Bonne situation';
+    color = 'oklch(0.68 0.21 150)';
     comment = `Bonne situation. Augmenter l'épargne (actuellement ${(savingsRate * 100).toFixed(0)} %) renforcerait davantage votre sécurité financière.`;
   } else if (score >= 40) {
     label = 'Correct';
-    color = '#F59E0B';
+    color = 'oklch(0.82 0.19 85)';
     comment = `Situation acceptable mais perfectible. Les charges représentent ${(chargesRate * 100).toFixed(0)} % des revenus — cherchez à réduire ou à épargner davantage.`;
   } else if (score >= 20) {
     label = 'Fragile';
-    color = '#F97316';
+    color = 'oklch(0.75 0.19 55)';
     comment = `Attention : charges élevées (${(chargesRate * 100).toFixed(0)} % des revenus) et épargne insuffisante. Certains postes méritent révision.`;
   } else {
     label = 'Critique';
-    color = '#EF4444';
+    color = 'oklch(0.62 0.25 25)';
     comment = 'Situation budgétaire tendue. Les dépenses consomment la quasi-totalité des revenus. Un rééquilibrage urgent est nécessaire.';
   }
 

@@ -4,8 +4,22 @@ import {
   FIXED_EXPENSE_CATEGORIES_ALEX,
   FIXED_EXPENSE_CATEGORIES_AURELIE,
   ALLOCATION_CATEGORIES,
+  getCategoryColor,
 } from '../utils/categories';
 import { totalFixedExpenses, totalAllocations, resolveAllocation } from '../utils/calculations';
+
+const P = {
+  bg:      '#FAFAF7',
+  surface: '#FFFFFF',
+  ink:     '#1A1A1A',
+  muted:   '#6B6B6B',
+  faint:   '#A8A8A3',
+  border:  '#E8E8E3',
+  divider: '#F0F0EB',
+  violet:  'oklch(0.58 0.24 295)',
+  violetBg:'oklch(0.95 0.05 295)',
+  red:     'oklch(0.62 0.25 25)',
+};
 
 const fmt = (n) =>
   (parseFloat(n) || 0).toLocaleString('fr-CA', {
@@ -63,7 +77,6 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
     update({ ...person, allocations: person.allocations.filter((a) => a.id !== id) });
   }
 
-  // Calculs locaux avec apport commun
   const salary = parseFloat(person.salary) || 0;
   const baseAfterCommun = salary - apportCommun;
   const charges = totalFixedExpenses(person.fixedExpenses);
@@ -73,46 +86,48 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
 
   return (
     <div style={S.page}>
-      <h1 style={S.h1}>{title}</h1>
-
-      <div style={S.cards}>
-        <Card label="Salaire net" value={salary} color="#4F46E5" />
-        <Card label="Charges fixes" value={charges} color="#EF4444" />
-        <Card label="Allocations" value={savings} color="#10B981" />
-        <Card
-          label="Disponible"
-          value={available}
-          color={available >= 0 ? '#10B981' : '#EF4444'}
-        />
+      <div style={S.titleWrap}>
+        <div style={S.eyebrow}>Avril 2026 · Budget individuel</div>
+        <h1 style={S.h1}>{title}</h1>
       </div>
 
-      {/* Salaire */}
-      <div style={S.section}>
-        <h2 style={{ ...S.h2, marginBottom: 16 }}>Salaire net mensuel</h2>
-        <div style={S.inlineRow}>
+      {/* KPI cards */}
+      <div style={S.kpiGrid}>
+        <KpiCard label="Revenus"         value={fmt(salary)}    tone={P.ink} />
+        <KpiCard label="Charges"         value={fmt(charges)}   tone={P.red} />
+        <KpiCard label="Épargne & Alloc." value={fmt(savings)}  tone={P.violet} />
+        <KpiCard label="Disponible"      value={fmt(available)} tone={available >= 0 ? P.ink : P.red} />
+      </div>
+
+      {/* Salary */}
+      <SectionCard title="Salaire net mensuel">
+        <div style={S.salaryWrap}>
           <input
             type="number"
             placeholder="0"
             value={person.salary || ''}
             onChange={(e) => update({ ...person, salary: e.target.value })}
-            style={S.inputLarge}
+            style={S.salaryInput}
           />
-          <span style={S.unit}>$</span>
+          <span style={S.salaryUnit}>$</span>
+          <span style={S.salaryMeta}>/ mois</span>
         </div>
-      </div>
+      </SectionCard>
 
-      {/* Charges fixes */}
-      <div style={S.section}>
-        <div style={S.sectionHead}>
-          <div>
-            <h2 style={S.h2}>Charges fixes</h2>
-            <p style={S.sub}>Base : {fmt(baseAfterCommun)} (salaire net − apport commun)</p>
-          </div>
-          <Btn onClick={addExpense}>+ Ajouter</Btn>
-        </div>
+      {/* Fixed charges */}
+      <SectionCard
+        title="Charges fixes"
+        action="Ajouter"
+        onAction={addExpense}
+        sub={`Base : ${fmt(baseAfterCommun)} (salaire − apport commun)`}
+      >
         {person.fixedExpenses.length === 0 && <p style={S.empty}>Aucune charge</p>}
-        {person.fixedExpenses.map((e) => (
-          <div key={e.id} style={S.row}>
+        {person.fixedExpenses.map((e, i) => (
+          <div key={e.id} style={{
+            ...S.row,
+            borderBottom: i < person.fixedExpenses.length - 1 ? `0.5px solid ${P.divider}` : 'none',
+          }}>
+            <div style={{ ...S.bar, background: getCategoryColor(e.category) }} />
             <select
               value={e.category}
               onChange={(v) => updateExpense(e.id, 'category', v.target.value)}
@@ -139,22 +154,22 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
             <strong>{fmt(charges)}</strong>
           </div>
         )}
-      </div>
+      </SectionCard>
 
       {/* Allocations */}
-      <div style={S.section}>
-        <div style={S.sectionHead}>
-          <div>
-            <h2 style={S.h2}>Allocations budgétaires</h2>
-            <p style={S.sub}>
-              Base : {fmt(baseForAlloc)} (salaire net − apport commun − charges fixes)
-            </p>
-          </div>
-          <Btn onClick={addAllocation}>+ Ajouter</Btn>
-        </div>
+      <SectionCard
+        title="Allocations budgétaires"
+        action="Ajouter"
+        onAction={addAllocation}
+        sub={`Base : ${fmt(baseForAlloc)} (salaire − apport commun − charges)`}
+      >
         {person.allocations.length === 0 && <p style={S.empty}>Aucune allocation</p>}
-        {person.allocations.map((a) => (
-          <div key={a.id} style={S.row}>
+        {person.allocations.map((a, i) => (
+          <div key={a.id} style={{
+            ...S.row,
+            borderBottom: i < person.allocations.length - 1 ? `0.5px solid ${P.divider}` : 'none',
+          }}>
+            <div style={{ ...S.bar, background: getCategoryColor(a.category) }} />
             <select
               value={a.category}
               onChange={(v) => updateAllocation(a.id, 'category', v.target.value)}
@@ -185,22 +200,37 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
             <Del onClick={() => removeAllocation(a.id)} />
           </div>
         ))}
-      </div>
+      </SectionCard>
     </div>
   );
 }
 
-function Card({ label, value, color }) {
+function KpiCard({ label, value, tone }) {
   return (
-    <div style={{ ...S.card, borderTop: `3px solid ${color}` }}>
-      <p style={S.cardLabel}>{label}</p>
-      <p style={{ ...S.cardValue, color }}>{fmt(value)}</p>
+    <div style={S.kpiCard}>
+      <div style={S.kpiLabel}>{label}</div>
+      <div style={{ ...S.kpiValue, color: tone }}>{value}</div>
     </div>
   );
 }
 
-function Btn({ onClick, children }) {
-  return <button onClick={onClick} style={S.btn}>{children}</button>;
+function SectionCard({ title, action, onAction, sub, children }) {
+  return (
+    <div style={S.card}>
+      <div style={S.cardHead}>
+        <div>
+          <div style={S.sectionTitle}>{title}</div>
+          {sub && <div style={S.sub}>{sub}</div>}
+        </div>
+        {action && (
+          <button onClick={onAction} style={S.addBtn}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> {action}
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 function Del({ onClick }) {
@@ -208,128 +238,182 @@ function Del({ onClick }) {
 }
 
 const S = {
-  page: { maxWidth: 800, margin: '0 auto', padding: '32px 24px 64px' },
-  h1: { fontSize: 28, fontWeight: 700, marginBottom: 24, color: '#111827' },
-  h2: { fontSize: 16, fontWeight: 600, color: '#111827' },
-  sub: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-  cards: {
+  page: { maxWidth: 720, margin: '0 auto', padding: '0 16px 64px' },
+  titleWrap: { padding: '24px 4px 20px' },
+  eyebrow: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 10, fontWeight: 500,
+    letterSpacing: '0.12em', color: '#A8A8A3',
+    textTransform: 'uppercase', marginBottom: 6,
+  },
+  h1: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 30, fontWeight: 600,
+    letterSpacing: '-0.8px', color: '#1A1A1A',
+    lineHeight: 1, margin: 0,
+  },
+  kpiGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-    gap: 16,
-    marginBottom: 28,
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 8, marginBottom: 14,
+  },
+  kpiCard: {
+    background: '#FFFFFF',
+    borderRadius: 14,
+    border: '0.5px solid #E8E8E3',
+    padding: '12px 10px',
+    minHeight: 78,
+    display: 'flex', flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  kpiLabel: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 9, fontWeight: 500,
+    letterSpacing: '0.06em', color: '#A8A8A3',
+    textTransform: 'uppercase', lineHeight: 1.2,
+  },
+  kpiValue: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 14, fontWeight: 600,
+    letterSpacing: '-0.3px',
+    fontVariantNumeric: 'tabular-nums',
+    lineHeight: 1.1, marginTop: 4,
   },
   card: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '16px 20px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    background: '#FFFFFF',
+    borderRadius: 18,
+    border: '0.5px solid #E8E8E3',
+    padding: '18px 18px 0',
+    marginBottom: 14,
+    overflow: 'hidden',
   },
-  cardLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    marginBottom: 6,
-  },
-  cardValue: { fontSize: 20, fontWeight: 700 },
-  section: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    marginBottom: 20,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-  },
-  sectionHead: {
+  cardHead: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    paddingBottom: 14,
   },
-  inlineRow: { display: 'flex', alignItems: 'center', gap: 10 },
-  row: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 },
+  sectionTitle: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 10, fontWeight: 500,
+    letterSpacing: '0.12em', color: '#A8A8A3',
+    textTransform: 'uppercase',
+  },
+  sub: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 11, color: '#A8A8A3',
+    marginTop: 3,
+  },
+  addBtn: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 11, fontWeight: 500,
+    color: 'oklch(0.58 0.24 295)',
+    letterSpacing: '0.03em',
+    padding: 0,
+    display: 'flex', alignItems: 'center', gap: 4,
+    flexShrink: 0,
+  },
+  salaryWrap: {
+    display: 'flex', alignItems: 'baseline', gap: 8,
+    padding: '10px 0 18px',
+  },
+  salaryInput: {
+    border: 'none',
+    background: 'transparent',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 32, fontWeight: 600,
+    color: '#1A1A1A', letterSpacing: '-1px',
+    fontVariantNumeric: 'tabular-nums',
+    outline: 'none',
+    width: 180, minWidth: 0,
+  },
+  salaryUnit: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 18, fontWeight: 500, color: '#6B6B6B',
+  },
+  salaryMeta: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 11, fontWeight: 500, color: '#A8A8A3',
+    letterSpacing: '0.03em',
+  },
+  row: {
+    display: 'flex', alignItems: 'center',
+    padding: '10px 0', gap: 10,
+  },
+  bar: {
+    width: 4, height: 32, borderRadius: 4, flexShrink: 0,
+  },
+  input: {
+    border: `1px solid #E8E8E3`,
+    borderRadius: 8,
+    padding: '7px 10px',
+    fontSize: 13,
+    outline: 'none',
+    minWidth: 0,
+    fontFamily: 'Poppins, sans-serif',
+    color: '#1A1A1A',
+    background: '#FAFAF7',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  select: {
+    border: `1px solid #E8E8E3`,
+    borderRadius: 8,
+    padding: '7px 8px',
+    fontSize: 12,
+    background: '#FAFAF7',
+    outline: 'none',
+    minWidth: 0,
+    fontFamily: 'Poppins, sans-serif',
+    color: '#1A1A1A',
+  },
+  typeSelect: {
+    border: `1px solid #E8E8E3`,
+    borderRadius: 8,
+    padding: '7px 6px',
+    fontSize: 12,
+    background: '#FAFAF7',
+    outline: 'none',
+    fontFamily: 'Poppins, sans-serif',
+    width: 52,
+    color: '#1A1A1A',
+  },
+  unit: { fontSize: 13, color: '#6B6B6B', fontWeight: 500, flexShrink: 0 },
+  computed: {
+    fontSize: 11,
+    color: 'oklch(0.58 0.24 295)',
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
+    fontVariantNumeric: 'tabular-nums',
+  },
   subtotal: {
     display: 'flex',
     justifyContent: 'space-between',
-    borderTop: '1px solid #F3F4F6',
+    borderTop: '0.5px solid #F0F0EB',
     paddingTop: 10,
+    paddingBottom: 14,
     marginTop: 4,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  input: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '8px 12px',
-    fontSize: 14,
-    outline: 'none',
-    minWidth: 0,
-    fontFamily: 'Poppins, sans-serif',
-    color: '#111827',
-  },
-  inputLarge: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '10px 16px',
-    fontSize: 20,
-    fontWeight: 600,
-    width: 200,
-    outline: 'none',
-    fontFamily: 'Poppins, sans-serif',
-    color: '#111827',
-  },
-  select: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '8px 10px',
     fontSize: 13,
-    background: '#fff',
-    outline: 'none',
-    minWidth: 0,
-    fontFamily: 'Poppins, sans-serif',
-    color: '#111827',
-  },
-  typeSelect: {
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '8px 6px',
-    fontSize: 13,
-    background: '#fff',
-    outline: 'none',
-    fontFamily: 'Poppins, sans-serif',
-    width: 56,
-    color: '#111827',
-  },
-  unit: { fontSize: 14, color: '#6B7280', fontWeight: 500, flexShrink: 0 },
-  computed: { fontSize: 12, color: '#4F46E5', fontWeight: 600, whiteSpace: 'nowrap' },
-  btn: {
-    background: '#EEF2FF',
-    color: '#4F46E5',
-    border: 'none',
-    borderRadius: 8,
-    padding: '7px 14px',
-    fontSize: 13,
-    fontWeight: 600,
-    flexShrink: 0,
-    fontFamily: 'Poppins, sans-serif',
-    cursor: 'pointer',
+    color: '#6B6B6B',
   },
   del: {
     background: 'none',
-    border: '1px solid #E5E7EB',
+    border: `1px solid #E8E8E3`,
     borderRadius: 6,
-    width: 28,
-    height: 28,
-    fontSize: 18,
-    color: '#9CA3AF',
-    display: 'flex',
-    alignItems: 'center',
+    width: 26, height: 26,
+    fontSize: 16, color: '#A8A8A3',
+    display: 'flex', alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
-    lineHeight: 1,
+    flexShrink: 0, lineHeight: 1,
     cursor: 'pointer',
     fontFamily: 'Poppins, sans-serif',
     padding: 0,
   },
-  empty: { fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' },
+  empty: {
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 12, color: '#A8A8A3',
+    fontStyle: 'italic', paddingBottom: 14,
+  },
 };

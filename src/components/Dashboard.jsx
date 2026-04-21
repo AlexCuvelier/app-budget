@@ -25,6 +25,7 @@ const P = {
   divider: '#F0F0EB',
   violet:  'oklch(0.58 0.24 295)',
   red:     'oklch(0.62 0.25 25)',
+  lime:    'oklch(0.82 0.28 130)',
 };
 
 const fmt = (n) =>
@@ -50,9 +51,9 @@ export default function Dashboard({ alex, aurelie, commun }) {
     alexSum.revenue > 0 || aurelieSum.revenue > 0 || comSum.totalContributions > 0;
 
   const barData = [
-    { name: 'Alex',    Revenus: alexSum.revenue,   Charges: alexSum.charges,   Épargne: alexSum.savings },
-    { name: 'Aurélie', Revenus: aurelieSum.revenue, Charges: aurelieSum.charges, Épargne: aurelieSum.savings },
-    { name: 'Commun',  Revenus: comSum.totalContributions, Charges: comSum.charges, Épargne: comSum.savings },
+    { name: 'Alex',    Revenus: alexSum.revenue,   Charges: alexSum.charges,   Épargne: alexSum.savings + alexSum.allocations },
+    { name: 'Aurélie', Revenus: aurelieSum.revenue, Charges: aurelieSum.charges, Épargne: aurelieSum.savings + aurelieSum.allocations },
+    { name: 'Commun',  Revenus: comSum.totalContributions, Charges: comSum.charges, Épargne: comSum.savings + comSum.allocations },
   ];
 
   const donutData = buildDonutData(alex, aurelie, commun);
@@ -77,12 +78,12 @@ export default function Dashboard({ alex, aurelie, commun }) {
           {/* Health gauge */}
           <div style={S.card}>
             <div style={S.healthWrap}>
-              <HealthGauge score={health.score} color={health.color} />
+              <HealthGauge score={health.score} color={P.violet} />
               <div style={S.healthInfo}>
                 <div style={S.eyebrow}>Santé financière</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: health.color }} />
-                  <span style={{ ...S.healthLabel, color: health.color }}>{health.label}</span>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: P.violet }} />
+                  <span style={{ ...S.healthLabel, color: P.violet }}>{health.label}</span>
                 </div>
                 <p style={S.healthText}>{health.comment}</p>
                 <div style={S.statsRow}>
@@ -140,7 +141,7 @@ export default function Dashboard({ alex, aurelie, commun }) {
                   iconType="square"
                   iconSize={8}
                 />
-                <Bar dataKey="Revenus" fill={P.ink}   radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Revenus" fill={P.lime}  radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Charges" fill={P.red}   radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Épargne" fill={P.violet} radius={[4, 4, 0, 0]} />
               </BarChart>

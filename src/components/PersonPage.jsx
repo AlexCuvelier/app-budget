@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { savePerson, genId } from '../utils/storage';
 import {
-  FIXED_EXPENSE_CATEGORIES_ALEX,
-  FIXED_EXPENSE_CATEGORIES_AURELIE,
+  FIXED_EXPENSE_CATEGORIES,
   ALLOCATION_CATEGORIES,
   getCategoryColor,
 } from '../utils/categories';
-import { totalFixedExpenses, totalAllocations, resolveAllocation } from '../utils/calculations';
+import { totalFixedExpenses, splitAllocations, resolveAllocation } from '../utils/calculations';
 
 const P = {
   bg:      '#FAFAF7',
@@ -32,8 +31,7 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
 
   useEffect(() => { setPerson(data); }, [data]);
 
-  const cats =
-    name === 'alex' ? FIXED_EXPENSE_CATEGORIES_ALEX : FIXED_EXPENSE_CATEGORIES_AURELIE;
+  const cats = FIXED_EXPENSE_CATEGORIES;
   const title = name === 'alex' ? 'Alex' : 'Aurélie';
 
   function update(next) {
@@ -81,8 +79,8 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
   const baseAfterCommun = salary - apportCommun;
   const charges = totalFixedExpenses(person.fixedExpenses);
   const baseForAlloc = baseAfterCommun - charges;
-  const savings = totalAllocations(person.allocations, baseForAlloc);
-  const available = baseForAlloc - savings;
+  const { savings: épargnes, allocations: allocationsAmt } = splitAllocations(person.allocations, baseForAlloc);
+  const available = baseForAlloc - épargnes - allocationsAmt;
 
   return (
     <div style={S.page}>
@@ -93,10 +91,10 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
 
       {/* KPI cards */}
       <div style={S.kpiGrid}>
-        <KpiCard label="Revenus"         value={fmt(salary)}    tone={P.ink} />
-        <KpiCard label="Charges"         value={fmt(charges)}   tone={P.red} />
-        <KpiCard label="Épargne & Alloc." value={fmt(savings)}  tone={P.violet} />
-        <KpiCard label="Disponible"      value={fmt(available)} tone={available >= 0 ? P.ink : P.red} />
+        <KpiCard label="Disponible"  value={fmt(available)}     tone={available >= 0 ? P.ink : P.red} />
+        <KpiCard label="Charges"     value={fmt(charges)}       tone={P.red} />
+        <KpiCard label="Épargnes"    value={fmt(épargnes)}      tone={P.violet} />
+        <KpiCard label="Allocations" value={fmt(allocationsAmt)} tone='oklch(0.82 0.19 85)' />
       </div>
 
       {/* Salary */}

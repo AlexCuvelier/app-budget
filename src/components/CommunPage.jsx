@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { saveCommun, genId } from '../utils/storage';
 import {
-  FIXED_EXPENSE_CATEGORIES_COMMUN,
+  FIXED_EXPENSE_CATEGORIES,
   PROJECT_CATEGORIES,
   getCategoryColor,
 } from '../utils/categories';
@@ -51,7 +51,7 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
       ...commun,
       fixedExpenses: [
         ...commun.fixedExpenses,
-        { id: genId(), category: FIXED_EXPENSE_CATEGORIES_COMMUN[0], amount: '' },
+        { id: genId(), category: FIXED_EXPENSE_CATEGORIES[0], amount: '' },
       ],
     });
   }
@@ -103,10 +103,10 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
 
       {/* KPI cards */}
       <div style={S.kpiGrid}>
-        <KpiCard label="Total apports"   value={fmt(sum.totalContributions)} tone={P.ink} />
-        <KpiCard label="Charges communes" value={fmt(sum.charges)}           tone={P.red} />
-        <KpiCard label="Allocations"     value={fmt(sum.savings)}            tone={P.violet} />
-        <KpiCard label="Disponible"      value={fmt(sum.available)} tone={sum.available >= 0 ? P.ink : P.red} />
+        <KpiCard label="Disponible"  value={fmt(sum.available)}    tone={sum.available >= 0 ? P.ink : P.red} />
+        <KpiCard label="Charges"     value={fmt(sum.charges)}      tone={P.red} />
+        <KpiCard label="Épargnes"    value={fmt(sum.savings)}      tone={P.violet} />
+        <KpiCard label="Allocations" value={fmt(sum.allocations)}  tone='oklch(0.82 0.19 85)' />
       </div>
 
       {/* Apports mensuels */}
@@ -128,17 +128,21 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
           pct={aureliePct}
           salary={aurelieSalary}
           onChange={(v) => setContrib('aurelie', v)}
-          isLast
         />
-        <div style={S.totalBar}>
-          <span style={S.totalLabel}>Total commun</span>
-          <span style={S.totalValue}>{fmt(sum.totalContributions)}</span>
-        </div>
         {/* So We Left */}
-        <div style={{ paddingTop: 12, borderTop: `0.5px solid ${P.divider}`, marginTop: 4 }}>
-          <div style={S.sowLabel}>So We Left</div>
-          <div style={S.contribInputRow}>
-            <div style={{ ...S.avatar, background: CONTRIB_TONES.soWeLeft }}>SWL</div>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '12px 0',
+          borderBottom: `0.5px solid ${P.divider}`,
+        }}>
+          <div style={{ ...S.avatar, background: CONTRIB_TONES.soWeLeft }}>SWL</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'Poppins, sans-serif', fontSize: 13,
+              fontWeight: 600, color: P.ink,
+            }}>So We Left</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="number"
               placeholder="0"
@@ -148,6 +152,10 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
             />
             <span style={S.unit}>$</span>
           </div>
+        </div>
+        <div style={S.totalBar}>
+          <span style={S.totalLabel}>Total commun</span>
+          <span style={S.totalValue}>{fmt(sum.totalContributions)}</span>
         </div>
       </SectionCard>
 
@@ -169,7 +177,7 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
               onChange={(v) => updateExpense(e.id, 'category', v.target.value)}
               style={{ ...S.select, flex: 2 }}
             >
-              {FIXED_EXPENSE_CATEGORIES_COMMUN.map((cat) => (
+              {FIXED_EXPENSE_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>

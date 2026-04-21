@@ -17,6 +17,7 @@ const P = {
   divider: '#F0F0EB',
   violet:  'oklch(0.58 0.24 295)',
   red:     'oklch(0.62 0.25 25)',
+  lime:    'oklch(0.82 0.28 130)',
 };
 
 const CONTRIB_TONES = {
@@ -103,7 +104,7 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
 
       {/* KPI cards */}
       <div style={S.kpiGrid}>
-        <KpiCard label="Disponible"  value={fmt(sum.available)}    tone={sum.available >= 0 ? P.ink : P.red} />
+        <KpiCard label="Disponible"  value={fmt(sum.available)}    tone={sum.available >= 0 ? P.lime : P.red} />
         <KpiCard label="Charges"     value={fmt(sum.charges)}      tone={P.red} />
         <KpiCard label="Épargnes"    value={fmt(sum.savings)}      tone={P.violet} />
         <KpiCard label="Allocations" value={fmt(sum.allocations)}  tone='oklch(0.82 0.19 85)' />
@@ -192,12 +193,6 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
             <Del onClick={() => removeExpense(e.id)} />
           </div>
         ))}
-        {commun.fixedExpenses.length > 0 && (
-          <div style={S.subtotal}>
-            <span>Total charges</span>
-            <strong>{fmt(sum.charges)}</strong>
-          </div>
-        )}
       </SectionCard>
 
       {/* Allocations budgétaires */}
@@ -205,7 +200,6 @@ export default function CommunPage({ data, alexSalary, aurelieSalary, onChange }
         title="Allocations budgétaires"
         action="Ajouter"
         onAction={addProject}
-        sub={`Base : ${fmt(sum.base)} (apports − charges)`}
       >
         {commun.projects.length === 0 && <p style={S.empty}>Aucun projet</p>}
         {commun.projects.map((p, i) => (

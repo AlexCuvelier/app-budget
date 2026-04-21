@@ -27,7 +27,6 @@ export const FIXED_EXPENSE_CATEGORIES = [
   'Spotify',
   'Téléphone(s)',
   'Telus Streaming (inclut Netflix / Disney+ / Amazon Prime)',
-  'Una',
   'Wifi',
   'YouTube Premium',
 ];

@@ -77,14 +77,18 @@ export default function Dashboard({ alex, aurelie, commun }) {
         <>
           {/* Health gauge */}
           <div style={S.card}>
+            <div style={S.cardHead}>
+              <div>
+                <div style={S.eyebrow}>Santé financière</div>
+                <div style={S.cardTitle}>{health.label}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: P.violet }} />
+              </div>
+            </div>
             <div style={S.healthWrap}>
               <HealthGauge score={health.score} color={P.violet} />
               <div style={S.healthInfo}>
-                <div style={S.eyebrow}>Santé financière</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: P.violet }} />
-                  <span style={{ ...S.healthLabel, color: P.violet }}>{health.label}</span>
-                </div>
                 <p style={S.healthText}>{health.comment}</p>
                 <div style={S.statsRow}>
                   <div>
@@ -154,23 +158,23 @@ export default function Dashboard({ alex, aurelie, commun }) {
               <div style={S.cardHead}>
                 <div>
                   <div style={S.eyebrow}>Dépenses du mois</div>
-                  <div style={S.cardTitle}>Par catégorie</div>
+                  <div style={S.cardTitle}>Par groupe</div>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={380}>
                 <PieChart>
                   <Pie
                     data={donutData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={120}
+                    cy="42%"
+                    innerRadius={70}
+                    outerRadius={110}
                     paddingAngle={2}
                     dataKey="value"
                     nameKey="name"
                   >
-                    {donutData.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />
+                    {donutData.map((entry, i) => (
+                      <Cell key={i} fill={GROUP_COLORS[entry.name] || CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip
@@ -186,9 +190,18 @@ export default function Dashboard({ alex, aurelie, commun }) {
                     }}
                   />
                   <Legend
-                    wrapperStyle={{ fontFamily: 'Poppins', fontSize: 12, color: P.muted }}
+                    layout="horizontal"
+                    verticalAlign="bottom"
+                    align="center"
                     iconType="square"
                     iconSize={8}
+                    wrapperStyle={{
+                      fontFamily: 'Poppins',
+                      fontSize: 11,
+                      color: P.muted,
+                      paddingTop: 12,
+                      lineHeight: '20px',
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -239,19 +252,73 @@ function HealthGauge({ score, color }) {
   );
 }
 
+const CATEGORY_TO_GROUP = {
+  'Loyer': 'Logement',
+  'Remboursement prêt maison': 'Logement',
+  'Assurance logement': 'Logement',
+  'Eau': 'Logement',
+  'Électricité': 'Logement',
+  'Remboursement prêt voiture': 'Transport',
+  'Assurance voiture': 'Transport',
+  'Essence': 'Transport',
+  'Netflix': 'Abonnements',
+  'Disney+': 'Abonnements',
+  'Spotify': 'Abonnements',
+  'Amazon Prime': 'Abonnements',
+  'Telus Streaming (inclut Netflix / Disney+ / Amazon Prime)': 'Abonnements',
+  'Nord VPN': 'Abonnements',
+  'YouTube Premium': 'Abonnements',
+  'Adobe': 'Abonnements',
+  'Canva': 'Abonnements',
+  'ChatGPT': 'Abonnements',
+  'Claude': 'Abonnements',
+  'LinkedIn Premium': 'Abonnements',
+  'Faceit Premium': 'Abonnements',
+  'Wifi': 'Abonnements',
+  'Téléphone(s)': 'Abonnements',
+  'Courses': 'Alimentation',
+  'Assurance santé privée': 'Santé',
+  'Pilates': 'Santé',
+  'Beauté': 'Santé',
+  'CELI': 'Épargne',
+  'Livret A': 'Épargne',
+  'Bourse': 'Épargne',
+  "Fonds d'urgence": 'Épargne',
+  'Épargne immobilier': 'Épargne',
+  'Épargne voiture': 'Épargne',
+  'Sorties': 'Loisirs',
+  'Vacances': 'Loisirs',
+  'Shopping': 'Loisirs',
+  'Una': 'Loisirs',
+};
+
+const GROUP_COLORS = {
+  'Logement':    'oklch(0.58 0.24 295)',
+  'Transport':   'oklch(0.70 0.17 195)',
+  'Abonnements': 'oklch(0.54 0.24 270)',
+  'Alimentation':'oklch(0.82 0.19 85)',
+  'Santé':       'oklch(0.62 0.25 25)',
+  'Épargne':     'oklch(0.68 0.21 150)',
+  'Loisirs':     'oklch(0.60 0.24 340)',
+  'Autre':       'oklch(0.60 0.04 240)',
+};
+
 function buildDonutData(alex, aurelie, commun) {
   const map = {};
-  function add(expenses) {
-    (expenses || []).forEach((e) => {
-      const val = parseFloat(e.amount) || 0;
+  function addItems(items, amountKey) {
+    (items || []).forEach((e) => {
+      const val = parseFloat(e[amountKey]) || 0;
       if (val <= 0) return;
-      const key = e.category || 'Autre';
-      map[key] = (map[key] || 0) + val;
+      const group = CATEGORY_TO_GROUP[e.category] || 'Autre';
+      map[group] = (map[group] || 0) + val;
     });
   }
-  add(alex.fixedExpenses);
-  add(aurelie.fixedExpenses);
-  add(commun.fixedExpenses);
+  addItems(alex.fixedExpenses, 'amount');
+  addItems(aurelie.fixedExpenses, 'amount');
+  addItems(commun.fixedExpenses, 'amount');
+  addItems(alex.allocations, 'value');
+  addItems(aurelie.allocations, 'value');
+  addItems(commun.projects, 'value');
   return Object.entries(map)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
@@ -291,7 +358,8 @@ const S = {
     color: '#1A1A1A', letterSpacing: '-0.3px',
   },
   healthWrap: {
-    display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+    display: 'flex', alignItems: 'center', gap: 20,
+    flexWrap: 'wrap', justifyContent: 'center',
   },
   healthInfo: { flex: 1, minWidth: 180 },
   healthLabel: {

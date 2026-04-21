@@ -18,6 +18,7 @@ const P = {
   violet:  'oklch(0.58 0.24 295)',
   violetBg:'oklch(0.95 0.05 295)',
   red:     'oklch(0.62 0.25 25)',
+  lime:    'oklch(0.82 0.28 130)',
 };
 
 const fmt = (n) =>
@@ -91,7 +92,7 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
 
       {/* KPI cards */}
       <div style={S.kpiGrid}>
-        <KpiCard label="Disponible"  value={fmt(available)}     tone={available >= 0 ? P.ink : P.red} />
+        <KpiCard label="Disponible"  value={fmt(available)}     tone={available >= 0 ? P.lime : P.red} />
         <KpiCard label="Charges"     value={fmt(charges)}       tone={P.red} />
         <KpiCard label="Épargnes"    value={fmt(épargnes)}      tone={P.violet} />
         <KpiCard label="Allocations" value={fmt(allocationsAmt)} tone='oklch(0.82 0.19 85)' />
@@ -117,7 +118,6 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
         title="Charges fixes"
         action="Ajouter"
         onAction={addExpense}
-        sub={`Base : ${fmt(baseAfterCommun)} (salaire − apport commun)`}
       >
         {person.fixedExpenses.length === 0 && <p style={S.empty}>Aucune charge</p>}
         {person.fixedExpenses.map((e, i) => (
@@ -146,12 +146,6 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
             <Del onClick={() => removeExpense(e.id)} />
           </div>
         ))}
-        {person.fixedExpenses.length > 0 && (
-          <div style={S.subtotal}>
-            <span>Total charges</span>
-            <strong>{fmt(charges)}</strong>
-          </div>
-        )}
       </SectionCard>
 
       {/* Allocations */}
@@ -159,7 +153,6 @@ export default function PersonPage({ name, data, onChange, apportCommun = 0 }) {
         title="Allocations budgétaires"
         action="Ajouter"
         onAction={addAllocation}
-        sub={`Base : ${fmt(baseForAlloc)} (salaire − apport commun − charges)`}
       >
         {person.allocations.length === 0 && <p style={S.empty}>Aucune allocation</p>}
         {person.allocations.map((a, i) => (
